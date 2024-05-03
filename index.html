@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <title>Numeric Data Processing</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: black;
+            color: red;
+            font-family: 'Roboto Mono', monospace;
+            transition: background-color 0.5s ease;
+        }
+        #dataForm {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+            border: 2px solid red;
+            border-radius: 10px;
+            background-color: #222;
+            transition: transform 0.5s ease;
+        }
+        #dataForm:hover {
+            transform: scale(1.1);
+        }
+        input, label {
+            transition: color 0.5s ease;
+            font-size: 20px;
+        }
+        input[type="number"], input[type="button"], #restartButton {
+            background-color: black;
+            color: red;
+            border: 1px solid red;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        input[type="button"], #restartButton {
+            cursor: pointer;
+            animation: pulse 2s infinite;
+        }
+        input[type="button"]:hover, #restartButton:hover {
+            background-color: red;
+            color: black;
+        }
+        .remove-btn {
+            margin-left: 10px;
+        }
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7);
+            }
+            50% {
+                transform: scale(1.1);
+                box-shadow: 0 0 0 15px rgba(255, 0, 0, 0);
+            }
+        }
+        #loadingIcon {
+            display: none;
+            position: absolute;
+            top: 80%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+        }
+        .spinner {
+            animation: spin 1s linear infinite;
+            fill: red;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #output {
+            display: none;
+            position: absolute;
+            top: 80%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: red;
+            font-size: 16px;
+            text-align: center;
+            transition: opacity 0.5s ease;
+            background-color: #222;
+            border: 2px solid red;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        #output a {
+            color: red;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .input-animation {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .input-remove-animation {
+            animation: fadeOut 0.5s ease-in-out;
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(20px); }
+        }
+    </style>
+</head>
+<body>
+    <form id="dataForm">
+        <div id="inputContainer">
+            <label for="data1">Enter Number:</label>
+            <input type="number" id="data1" name="data1"><br><br>
+        </div>
+        <input type="button" value="Add Input" id="addInputBtn" onclick="addInput()">
+        <input type="button" value="Submit" id="submitBtn" onclick="submitForm()">
+        <input type="button" value="Restart" id="restartButton" onclick="restartPage()" style="display:none;">
+    </form>
+    <div id="output"></div>
+    <svg id="loadingIcon" class="spinner" viewBox="0 0 50 50">
+        <polygon class="path" points="25,5 45,45 5,45" fill="red"></polygon>
+    </svg>
+
+    <script>
+      function addInput() {
+        const container = document.getElementById('inputContainer');
+        const newInput = document.createElement('div');
+        newInput.innerHTML = `<label>Enter Number:</label><input type="number"><input type="button" value="Remove" class="remove-btn" onclick="removeInput(this)">`;
+        newInput.classList.add('input-animation');
+        container.appendChild(newInput);
+      }
+
+      function removeInput(button) {
+        button.parentNode.classList.add('input-remove-animation');
+        setTimeout(() => {
+          button.parentNode.remove();
+        }, 500); // Matches the animation duration
+      }
+
+      function submitForm() {
+        const inputs = document.querySelectorAll('#inputContainer input[type="number"]');
+        const formData = Array.from(inputs).reduce((acc, input, index) => {
+          acc['data' + (index + 1)] = input.value;
+          return acc;
+        }, {});
+        
+        document.getElementById('loadingIcon').style.display = 'block';
+        document.getElementById('addInputBtn').style.display = 'none';
+        document.getElementById('submitBtn').style.display = 'none';
+        
+        google.script.run.withSuccessHandler(function(url) {
+          const output = document.getElementById('output');
+          output.innerHTML = 'Spreadsheet created with data: <a href="' + url + '" target="_blank">Open Spreadsheet</a>';
+          output.style.display = 'block';
+          output.style.opacity = 1;
+          document.getElementById('loadingIcon').style.display = 'none';
+          document.getElementById('restartButton').style.display = 'block';
+        }).processFormData(formData);
+      }
+
+      function restartPage() {
+        window.location.reload();
+      }
+    </script>
+</body>
+</html>
